@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Merger - รวม PDF</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🔗 PDF Merger</h1>
+        <p style="text-align: center; color: #666; font-size: 18px;">
+            รวมไฟล์ PDF หลายไฟล์เป็นไฟล์เดียว
+        </p>
+        
+        <form id="mergeForm" enctype="multipart/form-data">
+            <div class="upload-area">
+                <h3>📎 เลือกไฟล์ PDF ที่ต้องการรวม</h3>
+                <p style="color: #666;">คลิกเพื่อเลือกไฟล์หรือลากไฟล์มาวางที่นี่</p>
+                <input type="file" id="pdfFiles" name="files" multiple accept=".pdf" class="file-input" style="display: none;">
+                <div class="upload-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="selectMultipleFiles()">📁 เลือกหลายไฟล์</button>
+                    <button type="button" class="btn btn-secondary" onclick="selectSingleFile()">📄 เพิ่มไฟล์ทีละไฟล์</button>
+                </div>
+                <input type="file" id="singleFileInput" accept=".pdf" style="display: none;">
+            </div>
+            
+            <div id="fileList" class="file-list" style="display: none;">
+                <h4>📋 ไฟล์ที่เลือก:</h4>
+                <div id="selectedFiles"></div>
+                <div class="file-count" style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
+                    <strong>จำนวนไฟล์:</strong> <span id="fileCount">0</span> ไฟล์
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <button type="submit" class="btn">🔗 รวม PDF</button>
+                <button type="button" onclick="clearFiles()" class="btn" style="background: #dc3545;">🗑️ ล้างไฟล์</button>
+            </div>
+        </form>
+        
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>กำลังรวม PDF...</p>
+        </div>
+        
+        <div id="result" class="result"></div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
