@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"encoding/base64"
 	"fmt"
 	"io"
 	"log"
@@ -22,8 +21,6 @@ type MergeResponse struct {
 	Message     string `json:"message"`
 	Filename    string `json:"filename,omitempty"`
 	DownloadURL string `json:"download_url,omitempty"`
-	PdfData     string `json:"pdf_data,omitempty"` // Base64 encoded PDF data
-	PdfSize     int64  `json:"pdf_size,omitempty"` // Size in bytes
 }
 
 func main() {
@@ -48,10 +45,9 @@ func main() {
 	app.Get("/health", handleHealth)
 
 	// Start server
-	log.Println("🚀 Server starting on port 8081...")
-	log.Println("📁 Upload directory: ./uploads")
-	log.Println("🌐 Access the application at: http://localhost:8081")
-	log.Fatal(app.Listen(":8081"))
+	log.Println("🚀 Server starting on port 8082...")
+	log.Println("🌐 Access the application at: http://localhost:8082")
+	log.Fatal(app.Listen(":8082"))
 }
 
 func createDirectories() {
@@ -104,20 +100,16 @@ func handleMergePDF(c *fiber.Ctx) error {
 		})
 	}
 
-	// แปลงเป็น base64
-	base64Data := base64.StdEncoding.EncodeToString(mergedPDFData)
-
 	// สร้างชื่อไฟล์
 	timestamp := time.Now().Format("20060102_150405")
 	outputFilename := fmt.Sprintf("merged_pdf_%s.pdf", timestamp)
 
-	return c.JSON(MergeResponse{
-		Success:  true,
-		Message:  fmt.Sprintf("รวม PDF สำเร็จ! รวม %d ไฟล์เป็นไฟล์เดียว", len(files)),
-		Filename: outputFilename,
-		PdfData:  base64Data,
-		PdfSize:  int64(len(mergedPDFData)),
-	})
+	// ส่งไฟล์ PDF โดยตรง
+	c.Set("Content-Type", "application/pdf")
+	c.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", outputFilename))
+	c.Set("Content-Length", fmt.Sprintf("%d", len(mergedPDFData)))
+
+	return c.Send(mergedPDFData)
 }
 
 // รวม PDF ใน memory โดยไม่เก็บไฟล์ชั่วคราว

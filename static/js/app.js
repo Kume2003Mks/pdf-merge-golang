@@ -136,27 +136,66 @@ form.addEventListener('submit', async function(e) {
             body: formData
         });
 
-        const data = await response.json();
-        
-        if (data.success) {
-            // สร้างลิงก์ดาวน์โหลดจาก base64 data
-            if (data.pdf_data) {
-                const downloadLink = createDownloadLinkFromBase64(data.pdf_data, data.filename);
-                showResult('success', `${data.message}<br><br>
-                    <div style="margin-top: 15px;">
-                        <p style="margin-bottom: 10px;"><strong>📊 ข้อมูลไฟล์:</strong></p>
-                        <ul style="text-align: left; margin: 10px 0; padding-left: 20px;">
-                            <li><strong>ชื่อไฟล์:</strong> ${data.filename}</li>
-                            <li><strong>ขนาดไฟล์:</strong> ${formatFileSize(data.pdf_size)}</li>
-                            <li><strong>จำนวนไฟล์ที่รวม:</strong> ${selectedFilesList.length} ไฟล์</li>
-                        </ul>
-                        ${downloadLink}
-                    </div>`);
-            } else {
-                showResult('success', data.message);
+        if (response.ok) {
+            // ถ้า response เป็นไฟล์ PDF โดยตรง
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            
+            // สร้างชื่อไฟล์จาก Content-Disposition header หรือใช้ชื่อเริ่มต้น
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'merged_pdf.pdf';
+            if (contentDisposition) {
+                const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+                if (filenameMatch && filenameMatch[1]) {
+                    filename = filenameMatch[1].replace(/['"]/g, '');
+                }
             }
+            
+            // เก็บ URL ไว้เพื่อทำ cleanup ในภายหลัง
+            createdUrls.push(url);
+            
+            // แสดงผลลัพธ์สำเร็จ
+            showResult('success', `รวม PDF สำเร็จ! รวม ${selectedFilesList.length} ไฟล์เป็นไฟล์เดียว
+                <div style="margin-top: 15px;">
+                    <p style="margin-bottom: 10px;"><strong>📊 ข้อมูลไฟล์:</strong></p>
+                    <ul style="text-align: left; margin: 10px 0; padding-left: 20px;">
+                        <li><strong>ชื่อไฟล์:</strong> ${filename}</li>
+                        <li><strong>ขนาดไฟล์:</strong> ${formatFileSize(blob.size)}</li>
+                        <li><strong>จำนวนไฟล์ที่รวม:</strong> ${selectedFilesList.length} ไฟล์</li>
+                    </ul>
+                    <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
+                        <a href="${url}" download="${filename}" class="download-btn" style="
+                            display: inline-block; 
+                            padding: 12px 24px; 
+                            background: #28a745; 
+                            color: white; 
+                            text-decoration: none; 
+                            border-radius: 8px; 
+                            font-weight: bold;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
+                            📥 ดาวน์โหลดไฟล์ PDF
+                        </a>
+                        <button onclick="previewPDF('${url}')" class="preview-btn" style="
+                            padding: 12px 24px; 
+                            background: #007bff; 
+                            color: white; 
+                            border: none; 
+                            border-radius: 8px; 
+                            font-weight: bold; 
+                            cursor: pointer;
+                            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
+                            👁️ ดูตัวอย่าง PDF
+                        </button>
+                    </div>
+                </div>`);
         } else {
-            showResult('error', 'เกิดข้อผิดพลาด: ' + data.message);
+            // ถ้า response ไม่ใช่ไฟล์ แปลว่าเกิดข้อผิดพลาด
+            const data = await response.json();
+            showResult('error', 'เกิดข้อผิดพลาด: ' + (data.message || 'ไม่ทราบสาเหตุ'));
         }
     } catch (error) {
         showResult('error', 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' + error.message);
@@ -169,65 +208,6 @@ function showResult(type, message) {
     result.className = 'result ' + type;
     result.innerHTML = message;
     result.style.display = 'block';
-}
-
-// ฟังก์ชันสำหรับสร้างลิงก์ดาวน์โหลดจาก base64
-function createDownloadLinkFromBase64(base64Data, filename) {
-    try {
-        // แปลง base64 เป็น binary data
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        
-        // สร้าง Blob object
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        // สร้าง URL สำหรับ blob
-        const url = URL.createObjectURL(blob);
-        
-        // สร้างปุ่มดาวน์โหลด
-        return `
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
-                <a href="${url}" download="${filename}" class="download-btn" style="
-                    display: inline-block; 
-                    padding: 12px 24px; 
-                    background: #28a745; 
-                    color: white; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: bold;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
-                    📥 ดาวน์โหลดไฟล์ PDF
-                </a>
-                <button onclick="previewPDF('${url}')" class="preview-btn" style="
-                    padding: 12px 24px; 
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    border-radius: 8px; 
-                    font-weight: bold; 
-                    cursor: pointer;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
-                    👁️ ดูตัวอย่าง PDF
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error creating download link:', error);
-        return '<p style="color: #dc3545;">❌ เกิดข้อผิดพลาดในการสร้างลิงก์ดาวน์โหลด</p>';
-    }
-}
-
-// ฟังก์ชันสำหรับดูตัวอย่าง PDF
-function previewPDF(url) {
-    window.open(url, '_blank');
 }
 
 // เก็บ URLs ที่สร้างไว้เพื่อทำ cleanup
@@ -244,61 +224,9 @@ function cleanupUrls() {
 // เรียก cleanup เมื่อผู้ใช้ปิดหน้าเว็บ
 window.addEventListener('beforeunload', cleanupUrls);
 
-// ปรับปรุงฟังก์ชัน createDownloadLinkFromBase64 ให้เก็บ URL ไว้
-function createDownloadLinkFromBase64(base64Data, filename) {
-    try {
-        // แปลง base64 เป็น binary data
-        const byteCharacters = atob(base64Data);
-        const byteNumbers = new Array(byteCharacters.length);
-        for (let i = 0; i < byteCharacters.length; i++) {
-            byteNumbers[i] = byteCharacters.charCodeAt(i);
-        }
-        const byteArray = new Uint8Array(byteNumbers);
-        
-        // สร้าง Blob object
-        const blob = new Blob([byteArray], { type: 'application/pdf' });
-        
-        // สร้าง URL สำหรับ blob
-        const url = URL.createObjectURL(blob);
-        
-        // เก็บ URL ไว้เพื่อทำ cleanup ในภายหลัง
-        createdUrls.push(url);
-        
-        // สร้างปุ่มดาวน์โหลด
-        return `
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 15px;">
-                <a href="${url}" download="${filename}" class="download-btn" style="
-                    display: inline-block; 
-                    padding: 12px 24px; 
-                    background: #28a745; 
-                    color: white; 
-                    text-decoration: none; 
-                    border-radius: 8px; 
-                    font-weight: bold;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
-                    📥 ดาวน์โหลดไฟล์ PDF
-                </a>
-                <button onclick="previewPDF('${url}')" class="preview-btn" style="
-                    padding: 12px 24px; 
-                    background: #007bff; 
-                    color: white; 
-                    border: none; 
-                    border-radius: 8px; 
-                    font-weight: bold; 
-                    cursor: pointer;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-                    transition: all 0.3s ease;
-                " onmouseover="this.style.background='#0056b3'" onmouseout="this.style.background='#007bff'">
-                    👁️ ดูตัวอย่าง PDF
-                </button>
-            </div>
-        `;
-    } catch (error) {
-        console.error('Error creating download link:', error);
-        return '<p style="color: #dc3545;">❌ เกิดข้อผิดพลาดในการสร้างลิงก์ดาวน์โหลด</p>';
-    }
+// ฟังก์ชันสำหรับดูตัวอย่าง PDF
+function previewPDF(url) {
+    window.open(url, '_blank');
 }
 
 // Drag and drop functionality
