@@ -3,48 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PDF Merger - รวม PDF</title>
+    <title>ระบบรวม PDF เอกสาร</title>
     <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>🔗 PDF Merger</h1>
-        <p style="text-align: center; color: #666; font-size: 18px;">
-            รวมไฟล์ PDF หลายไฟล์เป็นไฟล์เดียว
-        </p>
-        
-        <form id="mergeForm" enctype="multipart/form-data">
-            <div class="upload-area">
-                <h3>📎 เลือกไฟล์ PDF ที่ต้องการรวม</h3>
-                <p style="color: #666;">คลิกเพื่อเลือกไฟล์หรือลากไฟล์มาวางที่นี่</p>
-                <input type="file" id="pdfFiles" name="files" multiple accept=".pdf" class="file-input" style="display: none;">
-                <div class="upload-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="selectMultipleFiles()">📁 เลือกหลายไฟล์</button>
-                    <button type="button" class="btn btn-secondary" onclick="selectSingleFile()">📄 เพิ่มไฟล์ทีละไฟล์</button>
+        <header class="header">
+            <div class="header-content">
+                <i class="fas fa-file-pdf header-icon"></i>
+                <h1>ระบบรวม PDF เอกสาร</h1>
+                <p>รวมเอกสาร PDF หลายไฟล์เป็นไฟล์เดียว</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <div class="upload-section">
+                <form id="pdfForm" enctype="multipart/form-data">
+                    <div class="file-upload-container">
+                        <!-- หนังสือ (required) -->
+                        <div class="file-upload-group required">
+                            <label for="official_document" class="file-label">
+                                <i class="fas fa-scroll"></i>
+                                <span>หนังสือ</span>
+                                <span class="required-mark">*</span>
+                            </label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="official_document" name="official_document" accept=".pdf" required>
+                                <div class="file-display">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>เลือกไฟล์หนังสือ (PDF)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- หนังสือเล่มที่ 2 (required) -->
+                        <div class="file-upload-group required">
+                            <label for="id_card" class="file-label">
+                                <i class="fas fa-id-card"></i>
+                                <span>หนังสือเล่มที่ 2</span>
+                                <span class="required-mark">*</span>
+                            </label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="id_card" name="id_card" accept=".pdf" required>
+                                <div class="file-display">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>เลือกไฟล์หนังสือเล่มที่ 2 (PDF)</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ตัวแบบคำขอ (optional) -->
+                        <div class="file-upload-group optional">
+                            <label for="request_form" class="file-label">
+                                <i class="fas fa-file-alt"></i>
+                                <span>ตัวแบบคำขอ</span>
+                                <span class="optional-mark">(ไม่บังคับ)</span>
+                            </label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="request_form" name="request_form" accept=".pdf">
+                                <div class="file-display">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                    <span>เลือกไฟล์ตัวแบบคำขอ (PDF)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-section">
+                        <button type="submit" id="mergeBtn" class="merge-btn">
+                            <i class="fas fa-magic"></i>
+                            <span>รวม PDF</span>
+                        </button>
+                        <button type="button" id="resetBtn" class="reset-btn">
+                            <i class="fas fa-redo"></i>
+                            <span>เริ่มใหม่</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state hidden">
+                <div class="loading-spinner">
+                    <i class="fas fa-spinner fa-spin"></i>
                 </div>
-                <input type="file" id="singleFileInput" accept=".pdf" style="display: none;">
+                <p>กำลังรวม PDF กรุณารอสักครู่...</p>
             </div>
-            
-            <div id="fileList" class="file-list" style="display: none;">
-                <h4>📋 ไฟล์ที่เลือก:</h4>
-                <div id="selectedFiles"></div>
-                <div class="file-count" style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
-                    <strong>จำนวนไฟล์:</strong> <span id="fileCount">0</span> ไฟล์
+
+            <!-- Result Section -->
+            <div id="resultSection" class="result-section hidden">
+                <div class="result-content">
+                    <div class="result-header">
+                        <i class="fas fa-check-circle success-icon"></i>
+                        <h2>รวม PDF สำเร็จ!</h2>
+                    </div>
+                    <div class="result-info">
+                        <p id="resultMessage"></p>
+                        <div class="file-info">
+                            <span id="fileName"></span>
+                            <span id="fileSize"></span>
+                        </div>
+                    </div>
+                    <div class="download-section">
+                        <button id="downloadBtn" class="download-btn">
+                            <i class="fas fa-download"></i>
+                            <span>ดาวน์โหลด PDF</span>
+                        </button>
+                    </div>
                 </div>
             </div>
-            
-            <div style="text-align: center;">
-                <button type="submit" class="btn">🔗 รวม PDF</button>
-                <button type="button" onclick="clearFiles()" class="btn" style="background: #dc3545;">🗑️ ล้างไฟล์</button>
+
+            <!-- Error Section -->
+            <div id="errorSection" class="error-section hidden">
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle error-icon"></i>
+                    <h2>เกิดข้อผิดพลาด</h2>
+                    <p id="errorMessage"></p>
+                    <button id="retryBtn" class="retry-btn">
+                        <i class="fas fa-redo"></i>
+                        <span>ลองใหม่</span>
+                    </button>
+                </div>
             </div>
-        </form>
-        
-        <div id="loading" class="loading">
-            <div class="spinner"></div>
-            <p>กำลังรวม PDF...</p>
-        </div>
-        
-        <div id="result" class="result"></div>
+        </main>
+
+        <footer class="footer">
+            <p>&copy; 2025 ระบบรวม PDF เอกสาร | สร้างด้วย Go Fiber</p>
+        </footer>
     </div>
 
     <script src="/static/js/app.js"></script>

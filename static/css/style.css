@@ -1,153 +1,455 @@
+/* CSS Reset และ Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
+    font-family: 'Sarabun', sans-serif;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     min-height: 100vh;
+    color: #333;
+    line-height: 1.6;
 }
 
 .container {
-    background: white;
-    border-radius: 15px;
-    padding: 30px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
-h1 {
-    color: #333;
+/* Header Styles */
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
     text-align: center;
     margin-bottom: 30px;
-    font-size: 2.5em;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.upload-area {
-    border: 3px dashed #ddd;
+.header-content h1 {
+    color: #2d3748;
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.header-content p {
+    color: #718096;
+    font-size: 1.1rem;
+    font-weight: 400;
+}
+
+.header-icon {
+    font-size: 3rem;
+    color: #e53e3e;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* File Upload Styles */
+.file-upload-container {
+    display: grid;
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.file-upload-group {
+    background: #f7fafc;
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px dashed #cbd5e0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.file-upload-group:hover {
+    border-color: #4299e1;
+    background: #ebf8ff;
+}
+
+.file-upload-group.required {
+    border-color: #e53e3e;
+}
+
+.file-upload-group.required:hover {
+    border-color: #c53030;
+    background: #fed7d7;
+}
+
+.file-upload-group.optional {
+    border-color: #38a169;
+}
+
+.file-upload-group.optional:hover {
+    border-color: #2f855a;
+    background: #c6f6d5;
+}
+
+.file-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+    color: #2d3748;
+}
+
+.file-label i {
+    font-size: 1.3rem;
+}
+
+.required-mark {
+    color: #e53e3e;
+    font-weight: 700;
+}
+
+.optional-mark {
+    color: #38a169;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.file-input-wrapper {
+    position: relative;
+    cursor: pointer;
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.file-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px;
+    background: white;
     border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    min-height: 60px;
+}
+
+.file-display:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e0;
+}
+
+.file-display i {
+    font-size: 1.5rem;
+    color: #718096;
+}
+
+.file-display span {
+    color: #4a5568;
+    font-weight: 500;
+}
+
+/* File Selected State */
+.file-selected .file-display {
+    background: #d4edda;
+    border-color: #28a745;
+}
+
+.file-selected .file-display i {
+    color: #28a745;
+}
+
+.file-selected .file-display span {
+    color: #155724;
+    font-weight: 600;
+}
+
+/* Action Section */
+.action-section {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.download-section {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.merge-btn, .reset-btn, .download-btn, .retry-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    border: none;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    min-width: 150px;
+    justify-content: center;
+}
+
+.merge-btn {
+    background: linear-gradient(135deg, #48bb78, #38a169);
+    color: white;
+    box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+.merge-btn:hover {
+    background: linear-gradient(135deg, #38a169, #2f855a);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+}
+
+.merge-btn:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.reset-btn {
+    background: linear-gradient(135deg, #ed8936, #dd6b20);
+    color: white;
+    box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
+}
+
+.reset-btn:hover {
+    background: linear-gradient(135deg, #dd6b20, #c05621);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(237, 137, 54, 0.4);
+}
+
+.download-btn {
+    background: linear-gradient(135deg, #4299e1, #3182ce);
+    color: white;
+    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+}
+
+.download-btn:hover {
+    background: linear-gradient(135deg, #3182ce, #2c5aa0);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+}
+
+.retry-btn {
+    background: linear-gradient(135deg, #e53e3e, #c53030);
+    color: white;
+    box-shadow: 0 4px 15px rgba(229, 62, 62, 0.3);
+    justify-self: center;
+}
+
+.retry-btn:hover {
+    background: linear-gradient(135deg, #c53030, #9c1c1c);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(229, 62, 62, 0.4);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.loading-spinner {
+    font-size: 3rem;
+    color: #4299e1;
+    margin-bottom: 20px;
+}
+
+.loading-state p {
+    font-size: 1.2rem;
+    color: #718096;
+    font-weight: 500;
+}
+
+/* Result Section */
+.result-section {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 15px;
     padding: 40px;
     text-align: center;
-    margin: 20px 0;
-    background: #f9f9f9;
-    transition: all 0.3s ease;
 }
 
-.upload-area:hover {
-    border-color: #667eea;
-    background: #f0f4ff;
+.result-header {
+    margin-bottom: 25px;
 }
 
-.file-input {
-    margin: 20px 0;
+.success-icon {
+    font-size: 3rem;
+    color: #28a745;
+    margin-bottom: 15px;
+    display: block;
 }
 
-.btn {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 15px 30px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 16px;
-    transition: transform 0.2s;
-    margin: 10px;
-}
-
-.btn:hover {
-    transform: translateY(-2px);
-}
-
-.btn-secondary {
-    background: linear-gradient(45deg, #6c757d, #5a6268);
-    padding: 10px 20px;
-    font-size: 14px;
-    margin: 5px;
-}
-
-.upload-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    flex-wrap: wrap;
-    margin: 20px 0;
-}
-
-.file-list {
-    margin: 20px 0;
-    padding: 15px;
-    background: #f5f5f5;
-    border-radius: 8px;
-}
-
-.file-item {
-    padding: 8px;
-    margin: 5px 0;
-    background: white;
-    border-radius: 5px;
-    border-left: 4px solid #667eea;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.file-item-content {
-    flex-grow: 1;
-}
-
-.file-remove-btn {
-    background: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 50%;
-    width: 25px;
-    height: 25px;
-    cursor: pointer;
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background-color 0.2s;
-}
-
-.file-remove-btn:hover {
-    background: #c82333;
-}
-
-.result {
-    margin: 20px 0;
-    padding: 15px;
-    border-radius: 8px;
-    display: none;
-}
-
-.success {
-    background: #d4edda;
+.result-header h2 {
     color: #155724;
-    border: 1px solid #c3e6cb;
+    font-size: 1.8rem;
+    font-weight: 600;
 }
 
-.error {
+.result-info {
+    margin-bottom: 30px;
+}
+
+.result-info p {
+    color: #155724;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.file-info {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    color: #155724;
+    font-weight: 500;
+}
+
+/* Error Section */
+.error-section {
     background: #f8d7da;
-    color: #721c24;
     border: 1px solid #f5c6cb;
-}
-
-.loading {
-    display: none;
+    border-radius: 15px;
+    padding: 40px;
     text-align: center;
-    margin: 20px 0;
 }
 
-.spinner {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #667eea;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto;
+.error-icon {
+    font-size: 3rem;
+    color: #dc3545;
+    margin-bottom: 15px;
+    display: block;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.error-section h2 {
+    color: #721c24;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.error-section p {
+    color: #721c24;
+    font-size: 1.1rem;
+    margin-bottom: 25px;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+    margin-top: 30px;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header-content h1 {
+        font-size: 2rem;
+    }
+    
+    .main-content {
+        padding: 25px;
+    }
+    
+    .action-section {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .merge-btn, .reset-btn, .download-btn, .retry-btn {
+        min-width: 200px;
+    }
+    
+    .file-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content h1 {
+        font-size: 1.6rem;
+    }
+    
+    .file-upload-group {
+        padding: 20px;
+    }
+    
+    .file-display {
+        padding: 15px;
+        flex-direction: column;
+        text-align: center;
+        gap: 8px;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.result-section, .error-section {
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* เพิ่ม animation สำหรับ loading */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+.loading-state {
+    animation: pulse 2s infinite;
 }

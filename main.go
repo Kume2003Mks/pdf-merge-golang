@@ -1,8 +1,12 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"os"
 	"path/filepath"
 	"time"
@@ -18,6 +22,14 @@ type MergeResponse struct {
 	Message     string `json:"message"`
 	Filename    string `json:"filename,omitempty"`
 	DownloadURL string `json:"download_url,omitempty"`
+	PdfData     string `json:"pdf_data,omitempty"` // Base64 encoded PDF data
+	PdfSize     int64  `json:"pdf_size,omitempty"` // Size in bytes
+}
+
+type DocumentFiles struct {
+	OfficialDocument *multipart.FileHeader `json:"official_document"` // หนังสือราชการ
+	IDCard           *multipart.FileHeader `json:"id_card"`           // สำเนาบัตร ปชช
+	RequestForm      *multipart.FileHeader `json:"request_form"`      // ตัวแบบคำขอ (optional)
 }
 
 func main() {
@@ -33,9 +45,6 @@ func main() {
 	app.Use(logger.New())
 	app.Use(cors.New())
 
-	// Serve static files from uploads directory
-	app.Static("/downloads", "./uploads")
-
 	// Serve static files (CSS, JS)
 	app.Static("/static", "./static")
 
@@ -46,13 +55,12 @@ func main() {
 
 	// Start server
 	log.Println("🚀 Server starting on port 8081...")
-	log.Println("📁 Upload directory: ./uploads")
 	log.Println("🌐 Access the application at: http://localhost:8081")
 	log.Fatal(app.Listen(":8081"))
 }
 
 func createDirectories() {
-	dirs := []string{"./uploads", "./temp", "./templates", "./static", "./static/css", "./static/js"}
+	dirs := []string{"./templates", "./static", "./static/css", "./static/js"}
 	for _, dir := range dirs {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			log.Fatalf("Failed to create directory %s: %v", dir, err)
@@ -64,6 +72,14 @@ func handleHome(c *fiber.Ctx) error {
 	return c.SendFile("./templates/index.html")
 }
 
+/*
+รับผ่านตัว key ไม่ซ้ำกัน
+1. official_document - หนังสือราชการ (required)
+2. id_card - สำเนาบัตร ปชช (required)
+3. request_form - ตัวแบบคำขอ (optional)
+
+ไม่เก็บไฟล์ชั่วคราว ประมวลผลใน memory แล้วส่งกลับเป็น base64
+*/
 func handleMergePDF(c *fiber.Ctx) error {
 	// Parse multipart form
 	form, err := c.MultipartForm()
@@ -74,16 +90,40 @@ func handleMergePDF(c *fiber.Ctx) error {
 		})
 	}
 
-	files := form.File["files"]
-	if len(files) < 2 {
+	// รับไฟล์ตาม key ที่กำหนด
+	var documentFiles DocumentFiles
+	var filesToMerge []*multipart.FileHeader
+
+	// 1. หนังสือราชการ (required)
+	if officialDocs := form.File["official_document"]; len(officialDocs) > 0 {
+		documentFiles.OfficialDocument = officialDocs[0]
+		filesToMerge = append(filesToMerge, officialDocs[0])
+	} else {
 		return c.Status(400).JSON(MergeResponse{
 			Success: false,
-			Message: "กรุณาเลือกไฟล์ PDF อย่างน้อย 2 ไฟล์",
+			Message: "กรุณาเลือกไฟล์หนังสือราชการ",
 		})
 	}
 
-	// Validate file types
-	for _, file := range files {
+	// 2. สำเนาบัตร ปชช (required)
+	if idCards := form.File["id_card"]; len(idCards) > 0 {
+		documentFiles.IDCard = idCards[0]
+		filesToMerge = append(filesToMerge, idCards[0])
+	} else {
+		return c.Status(400).JSON(MergeResponse{
+			Success: false,
+			Message: "กรุณาเลือกไฟล์สำเนาบัตรประชาชน",
+		})
+	}
+
+	// 3. ตัวแบบคำขอ (optional)
+	if requestForms := form.File["request_form"]; len(requestForms) > 0 {
+		documentFiles.RequestForm = requestForms[0]
+		filesToMerge = append(filesToMerge, requestForms[0])
+	}
+
+	// ตรวจสอบประเภทไฟล์
+	for _, file := range filesToMerge {
 		if filepath.Ext(file.Filename) != ".pdf" {
 			return c.Status(400).JSON(MergeResponse{
 				Success: false,
@@ -92,36 +132,8 @@ func handleMergePDF(c *fiber.Ctx) error {
 		}
 	}
 
-	// Save uploaded files temporarily
-	tempFiles := make([]string, len(files))
-	for i, file := range files {
-		tempPath := filepath.Join("./temp", fmt.Sprintf("temp_%d_%s", i, file.Filename))
-		if err := c.SaveFile(file, tempPath); err != nil {
-			// Clean up already saved files
-			for j := 0; j < i; j++ {
-				os.Remove(tempFiles[j])
-			}
-			return c.Status(500).JSON(MergeResponse{
-				Success: false,
-				Message: fmt.Sprintf("ไม่สามารถบันทึกไฟล์ %s ได้", file.Filename),
-			})
-		}
-		tempFiles[i] = tempPath
-	}
-
-	// Generate output filename
-	timestamp := time.Now().Format("20060102_150405")
-	outputFilename := fmt.Sprintf("merged_pdf_%s.pdf", timestamp)
-	outputPath := filepath.Join("./uploads", outputFilename)
-
-	// Merge PDFs using pdfcpu
-	err = mergePDFFiles(tempFiles, outputPath)
-
-	// Clean up temporary files
-	for _, tempFile := range tempFiles {
-		os.Remove(tempFile)
-	}
-
+	// อ่านไฟล์เข้า memory และรวม PDF
+	mergedPDFData, err := mergePDFInMemory(filesToMerge)
 	if err != nil {
 		return c.Status(500).JSON(MergeResponse{
 			Success: false,
@@ -129,36 +141,80 @@ func handleMergePDF(c *fiber.Ctx) error {
 		})
 	}
 
-	downloadURL := fmt.Sprintf("/downloads/%s", outputFilename)
+	// แปลงเป็น base64
+	base64Data := base64.StdEncoding.EncodeToString(mergedPDFData)
+
+	// สร้างชื่อไฟล์
+	timestamp := time.Now().Format("20060102_150405")
+	outputFilename := fmt.Sprintf("merged_documents_%s.pdf", timestamp)
+
+	// สร้างข้อความตอบกลับที่ระบุประเภทไฟล์
+	var includedFiles []string
+	if documentFiles.OfficialDocument != nil {
+		includedFiles = append(includedFiles, "หนังสือราชการ")
+	}
+	if documentFiles.IDCard != nil {
+		includedFiles = append(includedFiles, "สำเนาบัตรประชาชน")
+	}
+	if documentFiles.RequestForm != nil {
+		includedFiles = append(includedFiles, "ตัวแบบคำขอ")
+	}
+
+	message := fmt.Sprintf("รวมเอกสารสำเร็จ! ประกอบด้วย: %s", fmt.Sprintf("%v", includedFiles))
 
 	return c.JSON(MergeResponse{
-		Success:     true,
-		Message:     fmt.Sprintf("รวม PDF สำเร็จ! รวม %d ไฟล์เป็นไฟล์เดียว", len(files)),
-		Filename:    outputFilename,
-		DownloadURL: downloadURL,
+		Success:  true,
+		Message:  message,
+		Filename: outputFilename,
+		PdfData:  base64Data,
+		PdfSize:  int64(len(mergedPDFData)),
 	})
 }
 
-func mergePDFFiles(inputFiles []string, outputFile string) error {
-
-	//config := model.NewDefaultConfiguration()
-
-	if len(inputFiles) < 2 {
-		return fmt.Errorf("ต้องการไฟล์อย่างน้อย 2 ไฟล์ในการรวม")
+// รวม PDF ใน memory โดยไม่เก็บไฟล์ชั่วคราว
+func mergePDFInMemory(files []*multipart.FileHeader) ([]byte, error) {
+	if len(files) < 1 {
+		return nil, fmt.Errorf("ต้องการไฟล์อย่างน้อย 1 ไฟล์")
 	}
 
-	// Use pdfcpu API to merge PDFs
-	// err := api.MergeCreateFile(inputFiles, outputFile, false, config)
-	// if err != nil {
-	// 	return fmt.Errorf("การรวม PDF ล้มเหลว: %v", err)
-	// }
+	// อ่านไฟล์ทั้งหมดเข้า memory
+	var pdfReaders []io.ReadSeeker
 
-	err := api.MergeCreateFile(inputFiles, outputFile, false, nil)
+	for _, fileHeader := range files {
+		file, err := fileHeader.Open()
+		if err != nil {
+			return nil, fmt.Errorf("ไม่สามารถเปิดไฟล์ %s: %v", fileHeader.Filename, err)
+		}
+		defer file.Close()
+
+		// อ่านข้อมูลไฟล์ทั้งหมดเข้า buffer
+		fileData, err := io.ReadAll(file)
+		if err != nil {
+			return nil, fmt.Errorf("ไม่สามารถอ่านไฟล์ %s: %v", fileHeader.Filename, err)
+		}
+
+		// สร้าง ReadSeeker จาก bytes
+		reader := bytes.NewReader(fileData)
+		pdfReaders = append(pdfReaders, reader)
+	}
+
+	// ถ้ามีไฟล์เดียว ส่งกลับเลย
+	if len(pdfReaders) == 1 {
+		reader := pdfReaders[0]
+		reader.Seek(0, io.SeekStart)
+		return io.ReadAll(reader)
+	}
+
+	// สร้าง buffer สำหรับ output
+	var outputBuffer bytes.Buffer
+
+	// ใช้ pdfcpu API สำหรับรวม PDF จาก ReadSeeker
+	err := api.MergeRaw(pdfReaders, &outputBuffer, false, nil)
 	if err != nil {
-		return fmt.Errorf("การรวม PDF ล้มเหลว: %v", err)
+		return nil, fmt.Errorf("การรวม PDF ล้มเหลว: %v", err)
 	}
 
-	return nil
+	return outputBuffer.Bytes(), nil
 }
 
 func handleHealth(c *fiber.Ctx) error {
