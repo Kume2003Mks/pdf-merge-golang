@@ -14,18 +14,19 @@
         </p>
         
         <form id="mergeForm" enctype="multipart/form-data">
-            <div class="upload-area">
-                <h3>📎 เลือกไฟล์ PDF ที่ต้องการรวม</h3>
-                <p style="color: #666;">คลิกเพื่อเลือกไฟล์หรือลากไฟล์มาวางที่นี่</p>
-                <input type="file" id="pdfFiles" name="files" multiple accept=".pdf" class="file-input" style="display: none;">
-                <div class="upload-buttons">
-                    <button type="button" class="btn btn-secondary" onclick="selectMultipleFiles()">📁 เลือกหลายไฟล์</button>
-                    <button type="button" class="btn btn-secondary" onclick="selectSingleFile()">📄 เพิ่มไฟล์ทีละไฟล์</button>
-                </div>
-                <input type="file" id="singleFileInput" accept=".pdf" style="display: none;">
+        <div class="upload-area">
+            <h3>📎 เลือกไฟล์ PDF ที่ต้องการรวม</h3>
+            <p style="color: #666; margin-bottom: 20px;">
+                คลิกเพื่อเลือกไฟล์หรือลากไฟล์มาวางที่นี่<br>
+                <small style="font-size: 14px;">รองรับไฟล์ PDF เท่านั้น (ขนาดไฟล์รวมไม่เกิน 100MB)</small>
+            </p>
+            <input type="file" id="pdfFiles" name="files" multiple accept=".pdf" class="file-input" style="display: none;">
+            <div class="upload-buttons">
+                <button type="button" class="btn btn-secondary" onclick="selectMultipleFiles()">📁 เลือกหลายไฟล์</button>
+                <button type="button" class="btn btn-secondary" onclick="selectSingleFile()">📄 เพิ่มไฟล์ทีละไฟล์</button>
             </div>
-            
-            <div id="fileList" class="file-list" style="display: none;">
+            <input type="file" id="singleFileInput" accept=".pdf" style="display: none;">
+        </div>            <div id="fileList" class="file-list" style="display: none;">
                 <h4>📋 ไฟล์ที่เลือก:</h4>
                 <div id="selectedFiles"></div>
                 <div class="file-count" style="margin-top: 10px; padding: 8px; background: #e3f2fd; border-radius: 5px; font-size: 14px; color: #1976d2;">
@@ -41,7 +42,8 @@
         
         <div id="loading" class="loading">
             <div class="spinner"></div>
-            <p>กำลังรวม PDF...</p>
+            <p style="margin-top: 15px; font-weight: bold; color: #667eea;">กำลังประมวลผลไฟล์...</p>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">กรุณารอสักครู่ ระบบกำลังรวมไฟล์ PDF ใน memory</p>
         </div>
         
         <div id="result" class="result"></div>
